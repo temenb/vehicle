@@ -1,0 +1,102 @@
+<!DOCTYPE>
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+</head>
+<body>
+<pre><?php
+    echo "Coordinates: <span id=\"coordinates\"></span>";
+    echo "\nDirection: <span id=\"direction\"></span>";
+    echo "\nSpeed: <span id=\"speed\"></span>";
+?>
+</pre>
+<form method="post">
+    <input type="hidden" id="action" value="1"/>
+    <input type="text" name="rotate_amount" value="<?php echo isset($_GET['rotate_amount']) ? $_GET['rotate_amount'] : '45' ?>" />
+    <input type="submit" name="rotate_left" value="rotate_left"/>
+    <input type="submit" name="rotate_right" value="rotate_right"/> <br />
+    <input type="text" name="pedal_pressure_amount" value="<?php echo isset($_GET['pedal_pressure_amount']) ? $_GET['pedal_pressure_amount'] : '1' ?>" />
+    <input type="submit" name="pedal_pressure_up" value="pedal_pressure_up"/>
+    <input type="submit" name="pedal_pressure_down" value="pedal_pressure_down"/> <br />
+    <input type="submit" name="refresh" value="refresh"/> <br />
+</form>
+
+
+<canvas id="myCanvas" width="300" height="300" style="border:1px solid #000000;">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+<script type="text/javascript">
+    $(document).on('click', '[type=submit]', function(event) {
+        $('#action').attr('name', $(this).attr('name'));
+    });
+
+    $(document).on('submit', 'form', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        $.ajax({
+            url: "drive.php",
+            method: 'post',
+            data: jQuery(this).serialize(),
+            dataType: "json"
+        }).done(function(data) {
+            drawCar(data.coordinates.x, data.coordinates.y);
+            jQuery('#direction').text(data.direction);
+            jQuery('#speed').text(data.speed);
+            jQuery('#coordinates').text('(' + data.coordinates.x + ', ' + data.coordinates.y + ')');
+        });
+    });
+
+    var canvasSettings = {height: 300, width: 300};
+    $('#myCanvas').height(canvasSettings.height);
+    $('#myCanvas').width(canvasSettings.width);
+
+    function drawCar(x,y) {
+        var c = document.getElementById("myCanvas");
+        var ctx = c.getContext("2d");
+        ctx.beginPath();
+
+        ctx.clearRect(0, 0, c.width, c.height);
+        ctx.arc(x + canvasSettings.height / 2, y + canvasSettings.width / 2, 4, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+
+    function refreshData() {
+        $.ajax({
+            url: "status.php",
+            dataType: "json"
+        }).done(function(data) {
+            drawCar(data.coordinates.x, data.coordinates.y);
+            jQuery('#direction').text(data.direction);
+            jQuery('#speed').text(data.speed);
+            jQuery('#coordinates').text('(' + data.coordinates.x + ', ' + data.coordinates.y + ')');
+        });
+        setTimeout(refreshData, 1000);
+    }
+    refreshData();
+
+    jQuery('body').on('keydown', function(a) {
+        var name;
+        switch (a.which) {
+            case 38:
+                name='pedal_pressure_up';
+                break;
+            case 40:
+                name='pedal_pressure_down';
+                break;
+            case 37:
+                name='rotate_left';
+                break;
+            case 39:
+                name='rotate_right';
+                break;
+            default:
+                name='';
+        }
+        if (name) {
+            $('[name=' + name + ']').click();
+        }
+    });
+</script>
+</body></html>
