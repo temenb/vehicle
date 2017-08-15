@@ -16,5 +16,5 @@ class Car extends Vehicle {
     /**
      * @var int Ключ ячейки сессии, где хранится ключ сессии для сохранения состояния транспортного средства.
      */
-    protected $sessionKey = 'DEFAULT_CAR';
+    protected $key = 'DEFAULT_CAR';
 }
